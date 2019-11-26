@@ -1,0 +1,164 @@
+#include<pic.h>			// header file for pic microcontrollers
+#include<string.h>
+#include<stdio.h>
+#include"lcd.h"			// header file for lcd
+#include"UART.h"		// header file for uart
+#include"ADC.h"			// header file for adc
+
+__CONFIG ( FOSC_HS   &			// External Crystal at High Speed
+		   WDTE_OFF  &	           	// Disable Watchdog Timer.
+		   PWRTE_ON  &	        	// Enable Power Up Timer.
+		   BOREN_OFF &		// Disable Brown Out Reset.
+		   CP_OFF    &
+           CPD_OFF   &
+		   LVP_OFF );	        	// Disable Low Voltage Programming.
+
+void System_init();
+void TEMPERATURE_READ();
+void display_temp();
+void disp(float num);
+
+#define LM35 0		// TEMPERATURE_SENSOR
+
+#define RELAY RD1	// o/p
+
+
+#define on 1
+#define off 0
+
+
+
+float tempC,avg_temp = 0.0;
+char *str;
+
+int i = 0;
+
+int dec,n,temp;
+static float f1;
+char dot='.';
+
+void main()				// main program starts here
+{
+	TRISB = 0x00; // make lcd dataport output
+	TRISC = 0x00; // make port c output
+ 	TRISD = 0x00; // make RD0-RD3 INPUT AND RD4-RD7 OUTPUT
+	PORTB = 0x00; // write 0 to all port b
+	PORTC = 0x00; // write 0 to all port c
+
+	UART_Init(9600);
+ 
+	lcd_init();
+
+	ADC_Init();
+	
+	System_init();
+	
+	while(1)
+	{
+
+		TEMPERATURE_READ();
+		__delay_ms(20);
+		disp(tempC);
+		__delay_ms(100);
+		///UART_Write_Text(str);
+		
+		if(tempC >= 35.00)
+		{
+			RELAY = 1;
+		}
+		else
+		{
+			RELAY = 0;
+		}	
+		__delay_ms(2500);
+	}
+}
+
+void System_init()
+{ 
+
+	setcursorR1(0);
+	lcd_data_string("  TECHNOLOGY   ");
+	setcursorR2(0);
+	lcd_data_string("WELCOME YOU ALL");
+	__delay_ms(2000);
+	
+	setcursorR1(0);
+	lcd_data_string("      DATA  ");
+	setcursorR2(0);
+	lcd_data_string("ACQUISITION SYSTEM");
+	
+	UART_Write_Text("***************************************");
+	UART_Write(13);
+	UART_Write_Text("DATA ACQUISITION SYSTEM");
+	UART_Write(13);
+	__delay_ms(2000);
+	lcd_clear();
+	UART_Write_Text("***************************************");
+	UART_Write(13);
+	UART_Write_Text("SYSTEM INITIALIZING");
+	UART_Write(13);
+	setcursorR1(0);
+	lcd_data_string("SYSTEM INITI....");
+	setcursorR2(0);
+	for(int i =0;i<16;i++)
+	{
+		lcddata('.');
+		__delay_ms(100);
+	}
+	__delay_ms(1000);
+	UART_Write_Text("LOGGING TEMPERATURE");
+	UART_Write(13);
+	__delay_ms(100);
+	lcd_clear();
+	return;
+	
+}
+
+
+void TEMPERATURE_READ()
+{
+  avg_temp = 0.0;
+  tempC = 0.0;
+  for(i = 0; i<10; i++)
+  {
+    tempC = ADC_Read(LM35);  
+    avg_temp = tempC + avg_temp;
+  }    
+  tempC = avg_temp/10;
+  tempC = (5.0 * tempC * 100.0)/1024.0;
+}  
+
+
+
+
+
+void disp(float num)
+{
+	
+	n=num;
+	temp=num;
+	f1=num-temp;
+	dec=f1*100;
+	setcursorR1(0);
+	lcd_data_string("   TEMPERATURE  ");
+	UART_Write_Text("TEMPERATURE : ");
+	__delay_ms(50);
+	setcursorR2(1);
+	lcdvalue(n);
+	UART_value(n);
+	__delay_ms(50);
+	UART_Write('.');
+	__delay_ms(50);
+	lcddata(dot);
+	lcdvalue(dec);
+	__delay_ms(50);
+	UART_value(dec);
+	__delay_ms(20);
+	lcd_data_string(" CELCIUS     ");
+	__delay_ms(70);
+	UART_Write_Text(" DEG CELCIUS");
+	__delay_ms(50);
+	UART_Write(13);
+	__delay_ms(50);
+	}
