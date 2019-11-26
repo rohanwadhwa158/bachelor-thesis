@@ -1,0 +1,165 @@
+#include <pic.h> 
+#include "LCD.h"
+
+
+void lcd_init()  //Function to initialize LCD
+{
+	TRISB=0;  
+    PORTB= 0;
+	TRISD6=0;
+	TRISD7=0;
+  dataport = 0x38;
+  rs= 0;
+  e=1;
+  delayms(1);
+  e=0;    // Configuring settings to 8-bit 2 row 
+ delayms(250);
+ dataport = 0x0e;
+  rs= 0;
+ // rw=0;
+  e=1;
+  delayms(1);
+  e=0; 
+ delayms(250);
+dataport = 0x06;
+  rs= 0;
+ // rw=0;
+  e=1;
+  delayms(1);
+  e=0; 
+ delayms(250);
+  lcd_clear(); 
+  return;
+}
+
+void setcursorR1(unsigned int  cursor)
+{
+	  dataport =(0X80+cursor);
+	  rs= 0;
+	  //rw=0;
+	  e=1;
+	  delayms(1);
+	  e=0;
+	  return;
+}
+
+void setcursorR2(unsigned int cursor)
+{
+  dataport = (0xC0 + cursor);
+  rs= 0;
+  //rw=0;
+  e=1;
+  delayms(1);
+  e=0;
+  return;
+}
+ 
+ 
+void shiftlcd_display_right()
+{
+  dataport = 0x1c;
+  rs= 0;
+  //rw=0;
+  e=1;
+  delayms(1);
+  e=0;
+  return;
+}
+void shiftlcd_display_left()
+{
+  dataport = 0x18;
+  rs= 0;
+  //rw=0;
+  e=1;
+  delayms(1);
+  e=0;
+  return;
+}
+
+void lcd_clear()
+{
+ dataport = 0x01;
+ rs= 0;
+// rw=0;
+ e=1;
+ delayms(1);
+ e=0;
+ return;
+}
+ 
+
+void lcdcmd(unsigned char item)  //Function to send command to LCD
+{
+ dataport = item;
+ rs= 0;
+ //rw=0;
+ e=1;
+ delayms(1);
+ e=0;
+ delayms(1);
+ return;
+}
+
+void lcddata(unsigned char item)  //Function to send data to LCD
+{
+rs= 1;
+dataport = item;
+//rw=0;
+e=1;
+delayms(1);
+e=0;
+delayms(1);
+return;
+}
+
+void lcd_data_string(const unsigned char *str) // Function to send data to string
+{
+int i=0;
+while(str[i]!='\0')
+{
+  lcddata(str[i]);
+  i++;
+  //delay(10);
+}
+return;
+}
+
+void lcdvalue( int con)
+{
+	if(con >= 0 && con <= 9)
+	{
+		lcddata(con + 48);
+	}
+	if(con >= 10 && con <= 99)
+	{
+		lcddata((con / 10) + 48);
+	//	__delay_ms(1);
+		lcddata((con % 10) + 48);	
+	}
+	if(con >= 100 && con <= 999)
+	{	
+		//con = con / 10;
+		lcddata(((con / 10) / 10) + 48);
+		//__delay_ms(1);
+		lcddata(((con / 10) % 10) + 48);
+		//__delay_ms(1);
+		lcddata((con % 10) + 48);
+	}
+	if(con >= 1000 && con <= 9999)
+	{
+		lcddata (((con / 100) / 10) + 48);
+	//	__delay_ms(1);
+		lcddata(((con / 100) % 10) + 48);
+		//__delay_ms(1);
+		lcddata(((con % 100) / 10) + 48);
+	//	__delay_ms(1);
+		lcddata((con % 10) +48);
+	}
+
+}
+void delayms(unsigned int ui_value)
+{
+	while (ui_value-- > 0) 
+	{
+		__delay_ms(1);		// macro from HI-TECH compiler which will generate 1ms delay base on value of _XTAL_FREQ 
+}
