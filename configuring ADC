@@ -1,0 +1,21 @@
+#include <pic.h> 
+#include "ADC.h"
+
+void ADC_Init(void)
+{
+	ADCON1 = 0X80;
+	TRISA = 0X2F;
+	TRISE = 0X07;
+	ADCON0 = 0X81;
+}
+
+unsigned int ADC_Read(unsigned char channel)
+{
+	ADCON0 &= 0XC7;
+	ADCON0 |= (channel<<3);
+	__delay_ms(10);
+
+	GO = 1;
+	while(GO);
+	return ((ADRESH << 8) + ADRESL);
+}
